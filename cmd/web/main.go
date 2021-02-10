@@ -5,13 +5,13 @@ import (
 	"net/http"
 )
 
-type application struct {}
+type application struct{}
 
 func main() {
 	app := &application{}
-	
+
 	server := &http.Server{
-		Addr: ":2001",
+		Addr:    ":2001",
 		Handler: app.routes(),
 	}
 
@@ -19,6 +19,6 @@ func main() {
 	err := server.ListenAndServe()
 
 	if err != nil {
-		log.Fatalf("Something Happened!", err)
-	}	
+		log.Fatalf("Something Happened!")
+	}
 }
