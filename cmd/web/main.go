@@ -15,8 +15,9 @@ type application struct {
 func main() {
 	conn, err := redis.SetupRedis()
 	if err != nil {
-		log.Fatalf("Redis Error! %v", err)
+		log.Fatalf("Redis Connection Error! %v", err)
 	}
+	log.Println("Connected to Redis!")
 
 	redisModel := redis.RedisModel{Redis: conn}
 	app := &application{DB: redisModel, BaseURL: "localhost:2001"}
@@ -26,7 +27,7 @@ func main() {
 		Handler: app.routes(),
 	}
 
-	log.Println("Starting server!")
+	log.Println("Starting server on port 2001!")
 	err = server.ListenAndServe()
 
 	if err != nil {

@@ -4,6 +4,8 @@ import (
 	helpers "19shubham11/url-shortener/cmd/helpers"
 	"encoding/json"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func (app *application) checkHealth(w http.ResponseWriter, _ *http.Request) {
@@ -34,5 +36,18 @@ func (app *application) shortenURL(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(shortenedURLResponse)
+}
 
+func (app *application) getOriginalURL(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	hash := vars["id"]
+
+	url, err := app.getOriginalURLController(hash)
+
+	if err != nil {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
+	http.Redirect(w, r, url, http.StatusFound)
 }
