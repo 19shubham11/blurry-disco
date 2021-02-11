@@ -23,6 +23,18 @@ func TestCreateRandomHash(t *testing.T) {
 	})
 }
 
+func TestIsValidURL(t *testing.T) {
+	t.Run("Should return true for a valid URL", func(t *testing.T) {
+		url := "http://www.google.com"
+		assert.True(t, IsValidURL(url))
+	})
+
+	t.Run("Should return false for a valid URL", func(t *testing.T) {
+		url := "notAURL"
+		assert.False(t, IsValidURL(url))
+	})
+}
+
 func BenchmarkCreateRadomHash(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		CreateRandomHash()

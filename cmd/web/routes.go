@@ -7,8 +7,10 @@ import (
 )
 
 func (app *application) routes() http.Handler {
-	routes := mux.NewRouter()
-	routes.HandleFunc("/internal/health", app.health).Methods("GET")
+	router := mux.NewRouter()
 
-	return routes
+	router.HandleFunc("/internal/health", app.checkHealth).Methods("GET")
+	router.HandleFunc("/shorten", app.shortenURL).Methods("POST")
+
+	return router
 }
