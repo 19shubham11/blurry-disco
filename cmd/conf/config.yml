@@ -1,0 +1,10 @@
+server:
+  host: "localhost"
+  port: 2001
+
+redis:
+  host: "localhost"
+  port: 6379
+  username: "default"
+  password: ${REDIS_PASS}
+  db: 2

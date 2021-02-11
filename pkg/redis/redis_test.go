@@ -1,6 +1,8 @@
 package redis
 
 import (
+	config "19shubham11/url-shortener/cmd/conf"
+	"os"
 	"testing"
 
 	"github.com/gomodule/redigo/redis"
@@ -9,7 +11,17 @@ import (
 
 func RedisSetup(t *testing.T) (redis.Conn, func()) {
 	t.Helper()
-	conn, err := SetupRedis()
+	redisPass := os.Getenv("REDIS_PASS")
+
+	redisConf := config.RedisConf{
+		Host:     "localhost",
+		Port:     6379,
+		Username: "default",
+		Password: redisPass,
+		DB:       3,
+	}
+
+	conn, err := SetupRedis(redisConf)
 	if err != nil {
 		t.Fatalf("Redis Error!")
 	}

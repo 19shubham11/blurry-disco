@@ -1,8 +1,10 @@
 package main
 
 import (
+	config "19shubham11/url-shortener/cmd/conf"
 	"19shubham11/url-shortener/pkg/redis"
 	"19shubham11/url-shortener/pkg/store"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -13,14 +15,16 @@ type application struct {
 }
 
 func main() {
-	conn, err := redis.SetupRedis()
+	appConfig := config.GetApplicationConfig()
+	conn, err := redis.SetupRedis(appConfig.Redis)
 	if err != nil {
 		log.Fatalf("Redis Connection Error! %v", err)
 	}
 	log.Println("Connected to Redis!")
 
 	redisModel := redis.RedisModel{Redis: conn}
-	app := &application{DB: redisModel, BaseURL: "localhost:2001"}
+	baseURL := fmt.Sprintf("%s:%d", appConfig.Server.Host, appConfig.Server.Port)
+	app := &application{DB: redisModel, BaseURL: baseURL}
 
 	server := &http.Server{
 		Addr:    ":2001",
