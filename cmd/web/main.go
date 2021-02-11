@@ -2,12 +2,13 @@ package main
 
 import (
 	"19shubham11/url-shortener/pkg/redis"
+	"19shubham11/url-shortener/pkg/store"
 	"log"
 	"net/http"
 )
 
 type application struct {
-	DB      redis.Store
+	DB      store.Store
 	BaseURL string
 }
 
