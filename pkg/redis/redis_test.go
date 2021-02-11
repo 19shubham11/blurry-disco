@@ -51,4 +51,29 @@ func TestRedis(t *testing.T) {
 		assert.Equal(t, res, "")
 		assert.Equal(t, err.Error(), "redigo: nil returned")
 	})
+
+	t.Run("INCR should return the incremented value if the value can be cast as int", func(t *testing.T) {
+		key := "key1"
+		value := "22"
+		_, err := redisModel.Set(key, value)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		res, err := redisModel.Incr(key)
+		assert.Nil(t, err)
+		assert.Equal(t, res, 23)
+	})
+
+	t.Run("INCR should return an error if the value cannot be cast as int", func(t *testing.T) {
+		key := "key1"
+		value := "value"
+		_, err := redisModel.Set(key, value)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, err = redisModel.Incr(key)
+		assert.Equal(t, err.Error(), "ERR value is not an integer or out of range")
+	})
 }
