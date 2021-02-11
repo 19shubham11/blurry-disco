@@ -6,8 +6,8 @@ import (
 	"net/url"
 )
 
-// CreateRandomHash returns a random hash of length 8
-func CreateRandomHash() string {
+// CreateUniqueHash returns a random hash of length 8
+func CreateUniqueHash() string {
 	bytes := make([]byte, 4)
 	rand.Read(bytes)
 

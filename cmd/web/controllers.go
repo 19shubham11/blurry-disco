@@ -10,7 +10,7 @@ const statsPrefix = "STATS"
 const initStats = 0
 
 func (app *application) shortenURLController(request *ShortenURLRequest) ShortenURLResponse {
-	hash := helpers.CreateRandomHash()
+	hash := helpers.CreateUniqueHash()
 	statKey := getStatsKey(hash)
 
 	app.DB.Set(hash, request.URL)
