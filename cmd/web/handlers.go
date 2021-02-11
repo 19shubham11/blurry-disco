@@ -32,10 +32,10 @@ func (app *application) shortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortenedURLResponse := app.shortenURLController(body)
+	res := app.shortenURLController(body)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(shortenedURLResponse)
+	json.NewEncoder(w).Encode(res)
 }
 
 func (app *application) getOriginalURL(w http.ResponseWriter, r *http.Request) {
@@ -50,4 +50,19 @@ func (app *application) getOriginalURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, url, http.StatusFound)
+}
+
+func (app *application) getStats(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	hash := vars["id"]
+
+	res, err := app.getStatsController(hash)
+
+	if err != nil {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
 }
