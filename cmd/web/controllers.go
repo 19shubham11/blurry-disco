@@ -42,8 +42,12 @@ func (app *application) getStatsController(hash string) (res StatsResponse, err 
 	if err != nil {
 		return StatsResponse{}, err
 	}
+	hitsInt, err := strconv.Atoi(hits)
 
-	res = StatsResponse{URL: url, Hits: hits}
+	if err != nil {
+		return StatsResponse{}, err
+	}
+	res = StatsResponse{URL: url, Hits: hitsInt}
 	return res, nil
 }
 

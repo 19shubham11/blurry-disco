@@ -10,5 +10,5 @@ type ShortenURLResponse struct {
 
 type StatsResponse struct {
 	URL  string `json:"url"`
-	Hits string `json:"hits"`
+	Hits int    `json:"hits"`
 }
