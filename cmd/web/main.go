@@ -27,7 +27,7 @@ func main() {
 	app := &application{DB: redisModel, BaseURL: baseURL}
 
 	server := &http.Server{
-		Addr:    ":2001",
+		Addr:    fmt.Sprintf(":%d", appConfig.Server.Port),
 		Handler: app.routes(),
 	}
 

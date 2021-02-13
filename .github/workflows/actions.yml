@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request_target:
+    branches: [ $default-branch ]
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    environment: build
+
+    services:
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379
+    env:
+      REDIS_PASS: ${{ secrets.REDIS_PASS }}    
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.15.6
+    - name: Setup redis
+      run: docker run -d -p 6379:6379 redis redis-server --requirepass $REDIS_PASS
+    - name: Install Dependencies
+      run: go get -d ./...
+    - name: Build
+      run: go build ./cmd/web
+    - name: Test
+      run: go test -v ./...
