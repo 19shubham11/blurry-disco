@@ -13,13 +13,13 @@ import (
 	"testing"
 
 	config "19shubham11/url-shortener/cmd/conf"
-	db "19shubham11/url-shortener/pkg/redis"
+	redis "19shubham11/url-shortener/pkg/redis"
 
-	"github.com/gomodule/redigo/redis"
+	redisClient "github.com/gomodule/redigo/redis"
 	"github.com/stretchr/testify/assert"
 )
 
-func redisSetup() (redis.Conn, func()) {
+func redisSetup() (redisClient.Conn, func()) {
 	redisPass := os.Getenv("REDIS_PASS")
 
 	redisConf := config.RedisConf{
@@ -30,7 +30,7 @@ func redisSetup() (redis.Conn, func()) {
 		DB:       3,
 	}
 
-	conn, err := db.SetupRedis(redisConf)
+	conn, err := redis.SetupRedis(redisConf)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,7 +67,7 @@ func TestMain(m *testing.M) {
 	defer teardown()
 	log.Println("Tests - Connected to Redis!")
 
-	redisModel := db.RedisModel{Redis: conn}
+	redisModel := redis.RedisModel{Redis: conn}
 	app = &application{DB: redisModel}
 	ts = httptest.NewServer(app.routes())
 	app.BaseURL = ts.URL

@@ -6,14 +6,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gomodule/redigo/redis"
+	redisClient "github.com/gomodule/redigo/redis"
 	"github.com/stretchr/testify/assert"
 )
 
-var conn redis.Conn
+var conn redisClient.Conn
 var redisModel *RedisModel
 
-func redisSetup() (redis.Conn, func()) {
+func redisSetup() (redisClient.Conn, func()) {
 
 	redisPass := os.Getenv("REDIS_PASS")
 
