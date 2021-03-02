@@ -1,7 +1,7 @@
 package store
 
 type Store interface {
-	Set(key string, value string) (string, error)
+	Set(key string, value string) error
 	Get(key string) (string, error)
 	Incr(key string) (int, error)
 }

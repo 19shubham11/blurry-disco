@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	_ "github.com/go-redis/redis/v8"
 )
 
 type application struct {
@@ -16,10 +18,8 @@ type application struct {
 
 func main() {
 	appConfig := config.GetApplicationConfig()
-	conn, err := redis.SetupRedis(appConfig.Redis)
-	if err != nil {
-		log.Fatalf("Redis Connection Error! %v", err)
-	}
+	conn := redis.SetupRedis(appConfig.Redis)
+
 	log.Println("Connected to Redis!")
 
 	redisModel := redis.RedisModel{Redis: conn}
@@ -32,7 +32,7 @@ func main() {
 	}
 
 	log.Println("Starting server on port 2001!")
-	err = server.ListenAndServe()
+	err := server.ListenAndServe()
 
 	if err != nil {
 		log.Fatalf("Something Happened!")
