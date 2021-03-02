@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,13 +14,13 @@ import (
 	"testing"
 
 	config "19shubham11/url-shortener/cmd/conf"
-	redis "19shubham11/url-shortener/pkg/redis"
+	db "19shubham11/url-shortener/pkg/redis"
 
-	redisClient "github.com/gomodule/redigo/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 )
 
-func redisSetup() (redisClient.Conn, func()) {
+func redisSetup() (*redis.Client, func()) {
 	redisPass := os.Getenv("REDIS_PASS")
 
 	redisConf := config.RedisConf{
@@ -30,13 +31,11 @@ func redisSetup() (redisClient.Conn, func()) {
 		DB:       3,
 	}
 
-	conn, err := redis.SetupRedis(redisConf)
-	if err != nil {
-		log.Fatal(err)
-	}
+	conn := db.SetupRedis(redisConf)
 
 	return conn, func() {
-		conn.Do("FLUSHDB")
+		var ctx = context.Background()
+		conn.FlushDB(ctx)
 		conn.Close()
 	}
 }
@@ -67,7 +66,7 @@ func TestMain(m *testing.M) {
 	defer teardown()
 	log.Println("Tests - Connected to Redis!")
 
-	redisModel := redis.RedisModel{Redis: conn}
+	redisModel := db.RedisModel{Redis: conn}
 	app = &application{DB: redisModel}
 	ts = httptest.NewServer(app.routes())
 	app.BaseURL = ts.URL
