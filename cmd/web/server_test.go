@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	config "19shubham11/url-shortener/cmd/conf"
@@ -181,7 +182,7 @@ func TestGetStats(t *testing.T) {
 		decoder.Decode(shortenURLResponse)
 
 		numOfRequests := 50
-		makeHTTPCalls(shortenURLResponse.ShortenedURL, numOfRequests)
+		makeConcurrentHTTPCalls(shortenURLResponse.ShortenedURL, numOfRequests)
 		hitsRes, err := client.Get(shortenURLResponse.ShortenedURL + "/stats")
 		if err != nil {
 			log.Fatal(err)
@@ -209,8 +210,15 @@ func TestGetStats(t *testing.T) {
 	})
 }
 
-func makeHTTPCalls(url string, noOfRequests int) {
+func makeConcurrentHTTPCalls(url string, noOfRequests int) {
+	var wg sync.WaitGroup
+
 	for i := 0; i < noOfRequests; i++ {
-		client.Get(url)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			client.Get(url)
+		}()
 	}
+	wg.Wait()
 }
