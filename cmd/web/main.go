@@ -31,7 +31,7 @@ func main() {
 		Handler: app.routes(),
 	}
 
-	log.Println("Starting server on port 2001!")
+	log.Printf("Starting server on port %d!", appConfig.Server.Port)
 	err := server.ListenAndServe()
 
 	if err != nil {
