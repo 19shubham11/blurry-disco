@@ -28,7 +28,7 @@ func (r RedisModel) Get(key string) (string, error) {
 func (r RedisModel) Incr(key string) (int, error) {
 	value, err := r.Redis.Incr(ctx, key).Result()
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 	return int(value), nil
 }

@@ -6,8 +6,10 @@ import (
 	"strconv"
 )
 
-const statsPrefix = "STATS"
-const initStats = 0
+const (
+	statsPrefix = "STATS"
+	initStats   = 0
+)
 
 func (app *application) shortenURLController(request *ShortenURLRequest) ShortenURLResponse {
 	hash := helpers.CreateUniqueHash()
