@@ -66,8 +66,8 @@ func TestMain(m *testing.M) {
 	conn, teardown := redisSetup()
 	defer teardown()
 	log.Println("Tests - Connected to Redis!")
-
-	redisModel := db.RedisModel{Redis: conn}
+	ctx := context.Background()
+	redisModel := db.RedisModel{Redis: conn, Ctx: ctx}
 	app = &application{DB: redisModel}
 	ts = httptest.NewServer(app.routes())
 	app.BaseURL = ts.URL

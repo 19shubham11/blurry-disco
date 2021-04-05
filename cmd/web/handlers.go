@@ -1,8 +1,10 @@
 package main
 
 import (
+	customErrors "19shubham11/url-shortener/cmd/customErrors"
 	helpers "19shubham11/url-shortener/cmd/helpers"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -32,8 +34,11 @@ func (app *application) shortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := app.shortenURLController(body)
-
+	res, err := app.shortenURLController(body)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
 }
@@ -45,8 +50,13 @@ func (app *application) getOriginalURL(w http.ResponseWriter, r *http.Request) {
 	url, err := app.getOriginalURLController(hash)
 
 	if err != nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
+		if errors.Is(err, customErrors.ErrorNotFound) {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		} else if errors.Is(err, customErrors.ErrorInternal) {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	http.Redirect(w, r, url, http.StatusFound)
@@ -59,8 +69,13 @@ func (app *application) getStats(w http.ResponseWriter, r *http.Request) {
 	res, err := app.getStatsController(hash)
 
 	if err != nil {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
+		if errors.Is(err, customErrors.ErrorNotFound) {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		} else if errors.Is(err, customErrors.ErrorInternal) {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

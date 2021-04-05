@@ -11,16 +11,23 @@ const (
 	initStats   = 0
 )
 
-func (app *application) shortenURLController(request *ShortenURLRequest) ShortenURLResponse {
+func (app *application) shortenURLController(request *ShortenURLRequest) (ShortenURLResponse, error) {
 	hash := helpers.CreateUniqueHash()
 	statKey := getStatsKey(hash)
 
-	app.DB.Set(hash, request.URL)
-	app.DB.Set(statKey, strconv.Itoa(initStats))
+	err := app.DB.Set(hash, request.URL)
+	if err != nil {
+		return ShortenURLResponse{}, err
+	}
+	err = app.DB.Set(statKey, strconv.Itoa(initStats))
+
+	if err != nil {
+		return ShortenURLResponse{}, err
+	}
 
 	returnURL := fmt.Sprintf("%s/%s", app.BaseURL, hash)
 
-	return ShortenURLResponse{ShortenedURL: returnURL}
+	return ShortenURLResponse{ShortenedURL: returnURL}, nil
 }
 
 func (app *application) getOriginalURLController(hash string) (url string, err error) {
@@ -38,7 +45,6 @@ func (app *application) getStatsController(hash string) (res StatsResponse, err 
 	if err != nil {
 		return StatsResponse{}, err
 	}
-
 	statKey := getStatsKey(hash)
 	hits, err := app.DB.Get(statKey)
 	if err != nil {

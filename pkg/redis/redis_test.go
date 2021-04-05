@@ -2,6 +2,7 @@ package redis
 
 import (
 	config "19shubham11/url-shortener/cmd/conf"
+	"19shubham11/url-shortener/cmd/customErrors"
 	"context"
 	"os"
 	"testing"
@@ -37,8 +38,8 @@ func redisSetup() (*redis.Client, func()) {
 func TestMain(m *testing.M) {
 	conn, teardown := redisSetup()
 	defer teardown()
-
-	redisModel = &RedisModel{Redis: conn}
+	ctx := context.Background()
+	redisModel = &RedisModel{Redis: conn, Ctx: ctx}
 	code := m.Run()
 	os.Exit(code)
 }
@@ -63,7 +64,7 @@ func TestGET(t *testing.T) {
 	t.Run("GET should return an error if trying to get a key that does not exist", func(t *testing.T) {
 		res, err := redisModel.Get("Does not exist")
 		assert.Equal(t, res, "")
-		assert.Equal(t, err, redis.Nil)
+		assert.Equal(t, err, customErrors.ErrorNotFound)
 	})
 }
 func TestINCR(t *testing.T) {
@@ -83,6 +84,6 @@ func TestINCR(t *testing.T) {
 		redisModel.Set(key, value)
 
 		_, err := redisModel.Incr(key)
-		assert.Equal(t, err.Error(), "ERR value is not an integer or out of range")
+		assert.Equal(t, err, customErrors.ErrorInternal)
 	})
 }
