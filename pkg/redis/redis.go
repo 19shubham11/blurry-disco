@@ -14,7 +14,6 @@ type RedisModel struct {
 
 func (r RedisModel) Set(key string, value string) error {
 	return r.Redis.Set(ctx, key, value, 0).Err()
-
 }
 
 func (r RedisModel) Get(key string) (string, error) {

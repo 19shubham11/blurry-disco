@@ -115,6 +115,18 @@ func TestPOSTShorten(t *testing.T) {
 		assert.Equal(t, true, strings.Contains(response.ShortenedURL, ts.URL))
 	})
 
+	t.Run("Should return 400 if url field is empty", func(t *testing.T) {
+		reqBody := &ShortenURLRequest{URL: ""}
+		reqJSON := getJSONBytes(reqBody)
+		resp, err := client.Post(ts.URL+"/shorten", "application/json", bytes.NewBuffer(reqJSON))
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	})
+
 	t.Run("Should return 400 if the given url is invalid", func(t *testing.T) {
 		reqBody := &ShortenURLRequest{URL: "notAURL"}
 		reqJSON := getJSONBytes(reqBody)
