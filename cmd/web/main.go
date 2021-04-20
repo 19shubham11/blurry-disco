@@ -23,7 +23,7 @@ func main() {
 
 	_, err := conn.Ping(context.Background()).Result()
 	if err != nil {
-		log.Fatal("Unable to connect to redis!")
+		log.Fatal("Unable to connect to redis!", err)
 	}
 
 	ctx := context.Background()

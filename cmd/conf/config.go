@@ -1,23 +1,23 @@
 package conf
 
 import (
-	"io/ioutil"
+	"log"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"github.com/spf13/viper"
 )
 
 type ServerConf struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
+	Host string
+	Port int
 }
 
 type RedisConf struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	DB       int    `yaml:"db"`
+	Host     string
+	Port     int
+	Username string
+	Password string
+	DB       int
 }
 
 type Config struct {
@@ -31,14 +31,27 @@ func GetApplicationConfig() *Config {
 		panic(err)
 	}
 
-	confContent, err := ioutil.ReadFile(pwd + "/cmd/conf/config.yml")
+	viper.SetConfigName("config")
+	viper.AutomaticEnv()
+	viper.SetConfigType("yml")
+
+	err = viper.BindEnv("redis.password", "REDIS_PASS")
 	if err != nil {
-		panic(err)
+		log.Fatal("err!", err)
 	}
-	confContent = []byte(os.ExpandEnv(string(confContent)))
+
+	viper.AddConfigPath(pwd + "/cmd/conf")
+	err = viper.ReadInConfig()
+	if err != nil {
+		log.Fatal("err!", err)
+	}
+
 	conf := &Config{}
-	if err := yaml.Unmarshal(confContent, conf); err != nil {
-		panic(err)
+	err = viper.Unmarshal(conf)
+
+	if err != nil {
+		log.Fatal("unable to decode config", err)
 	}
+
 	return conf
 }
