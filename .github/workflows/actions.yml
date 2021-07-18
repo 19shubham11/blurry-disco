@@ -35,7 +35,7 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.15.6
+        go-version: 1.16.6
     - name: Setup redis
       run: docker run -d -p 6379:6379 redis redis-server --requirepass $REDIS_PASS
     - name: Install Dependencies
