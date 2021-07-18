@@ -1,4 +1,4 @@
-package conf
+package config
 
 import (
 	"log"
@@ -48,7 +48,6 @@ func GetApplicationConfig() *Config {
 
 	conf := &Config{}
 	err = viper.Unmarshal(conf)
-
 	if err != nil {
 		log.Fatal("unable to decode config", err)
 	}

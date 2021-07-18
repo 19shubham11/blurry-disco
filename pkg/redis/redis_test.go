@@ -1,8 +1,8 @@
 package redis
 
 import (
-	config "19shubham11/url-shortener/cmd/conf"
-	"19shubham11/url-shortener/cmd/customErrors"
+	config "19shubham11/url-shortener/config"
+	"19shubham11/url-shortener/internal/customErrors"
 	"context"
 	"os"
 	"testing"

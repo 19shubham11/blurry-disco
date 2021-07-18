@@ -1,7 +1,7 @@
 package redis
 
 import (
-	customErrors "19shubham11/url-shortener/cmd/customErrors"
+	customErrors "19shubham11/url-shortener/internal/customErrors"
 	"context"
 	"errors"
 

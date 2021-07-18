@@ -1,8 +1,8 @@
 package main
 
 import (
-	customErrors "19shubham11/url-shortener/cmd/customErrors"
-	helpers "19shubham11/url-shortener/cmd/helpers"
+	customErrors "19shubham11/url-shortener/internal/customErrors"
+	helpers "19shubham11/url-shortener/internal/helpers"
 	"encoding/json"
 	"errors"
 	"net/http"
