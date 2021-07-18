@@ -1,12 +1,12 @@
 package redis
 
 import (
-	"19shubham11/url-shortener/cmd/conf"
+	"19shubham11/url-shortener/config"
 
 	"github.com/go-redis/redis/v8"
 )
 
-func SetupRedis(config conf.RedisConf) *redis.Client {
+func SetupRedis(config config.RedisConf) *redis.Client {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Username: config.Username,

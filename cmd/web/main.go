@@ -1,7 +1,7 @@
 package main
 
 import (
-	config "19shubham11/url-shortener/cmd/conf"
+	config "19shubham11/url-shortener/config"
 	"19shubham11/url-shortener/pkg/redis"
 	"19shubham11/url-shortener/pkg/store"
 	"context"
