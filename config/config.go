@@ -40,7 +40,7 @@ func GetApplicationConfig() *Config {
 		log.Fatal("err!", err)
 	}
 
-	viper.AddConfigPath(pwd + "/cmd/conf")
+	viper.AddConfigPath(pwd + "/config")
 	err = viper.ReadInConfig()
 	if err != nil {
 		log.Fatal("err!", err)
