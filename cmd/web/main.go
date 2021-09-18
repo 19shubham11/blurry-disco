@@ -1,15 +1,16 @@
 package main
 
 import (
-	config "19shubham11/url-shortener/config"
-	"19shubham11/url-shortener/pkg/redis"
-	"19shubham11/url-shortener/pkg/store"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
 
 	_ "github.com/go-redis/redis/v8"
+
+	"19shubham11/url-shortener/config"
+	"19shubham11/url-shortener/pkg/redis"
+	"19shubham11/url-shortener/pkg/store"
 )
 
 type application struct {

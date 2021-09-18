@@ -1,11 +1,12 @@
 package redis
 
 import (
-	customErrors "19shubham11/url-shortener/internal/customErrors"
 	"context"
 	"errors"
 
 	"github.com/go-redis/redis/v8"
+
+	"19shubham11/url-shortener/internal/customErrors"
 )
 
 type RedisModel struct {

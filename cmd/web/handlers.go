@@ -1,13 +1,14 @@
 package main
 
 import (
-	customErrors "19shubham11/url-shortener/internal/customErrors"
-	helpers "19shubham11/url-shortener/internal/helpers"
 	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
+
+	"19shubham11/url-shortener/internal/customErrors"
+	"19shubham11/url-shortener/internal/helpers"
 )
 
 func (app *application) checkHealth(w http.ResponseWriter, _ *http.Request) {

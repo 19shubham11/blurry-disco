@@ -14,11 +14,11 @@ import (
 	"sync"
 	"testing"
 
-	config "19shubham11/url-shortener/config"
-	db "19shubham11/url-shortener/pkg/redis"
-
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
+
+	config "19shubham11/url-shortener/config"
+	db "19shubham11/url-shortener/pkg/redis"
 )
 
 func redisSetup() (*redis.Client, func()) {

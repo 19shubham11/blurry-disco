@@ -1,14 +1,15 @@
 package redis
 
 import (
-	config "19shubham11/url-shortener/config"
-	"19shubham11/url-shortener/internal/customErrors"
 	"context"
 	"os"
 	"testing"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
+
+	"19shubham11/url-shortener/config"
+	"19shubham11/url-shortener/internal/customErrors"
 )
 
 var conn *redis.Client
