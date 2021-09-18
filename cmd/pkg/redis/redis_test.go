@@ -8,8 +8,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 
-	"19shubham11/url-shortener/config"
-	customerrors "19shubham11/url-shortener/internal/customerrors"
+	"19shubham11/url-shortener/cmd/config"
+	"19shubham11/url-shortener/cmd/internal/customerrors"
 )
 
 var conn *redis.Client

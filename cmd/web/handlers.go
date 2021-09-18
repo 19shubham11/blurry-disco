@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	customerrors "19shubham11/url-shortener/internal/customerrors"
-	helpers "19shubham11/url-shortener/internal/helpers"
+	"19shubham11/url-shortener/cmd/internal/customerrors"
+	"19shubham11/url-shortener/cmd/internal/helpers"
 )
 
 func (app *application) checkHealth(w http.ResponseWriter, _ *http.Request) {
