@@ -8,9 +8,9 @@ import (
 
 	_ "github.com/go-redis/redis/v8"
 
-	"19shubham11/url-shortener/config"
-	"19shubham11/url-shortener/pkg/redis"
-	"19shubham11/url-shortener/pkg/store"
+	"19shubham11/url-shortener/cmd/config"
+	"19shubham11/url-shortener/cmd/pkg/redis"
+	"19shubham11/url-shortener/cmd/pkg/store"
 )
 
 type application struct {

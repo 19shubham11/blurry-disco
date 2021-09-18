@@ -1,7 +1,7 @@
 package redis
 
 import (
-	"19shubham11/url-shortener/config"
+	"19shubham11/url-shortener/cmd/config"
 
 	"github.com/go-redis/redis/v8"
 )

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"19shubham11/url-shortener/internal/helpers"
+	"19shubham11/url-shortener/cmd/internal/helpers"
 )
 
 const (
