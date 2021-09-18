@@ -13,5 +13,6 @@ func SetupRedis(config config.RedisConf) *redis.Client {
 		Password: config.Password,
 		DB:       config.DB,
 	})
+
 	return rdb
 }

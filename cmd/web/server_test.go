@@ -36,6 +36,7 @@ func redisSetup() (*redis.Client, func()) {
 
 	return conn, func() {
 		var ctx = context.Background()
+
 		conn.FlushDB(ctx)
 		conn.Close()
 	}
@@ -46,6 +47,7 @@ func getResponseTextBody(resp *http.Response) []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return responseData
 }
 
@@ -55,6 +57,7 @@ func getJSONBytes(str interface{}) []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	return b
 }
 
@@ -62,13 +65,17 @@ var ts *httptest.Server
 var app *application
 var client *http.Client
 
-func TestMain(m *testing.M) {
+func initTests(m *testing.M) int {
 	conn, teardown := redisSetup()
 	defer teardown()
+
 	log.Println("Tests - Connected to Redis!")
+
 	ctx := context.Background()
-	redisModel := db.RedisModel{Redis: conn, Ctx: ctx}
+
+	redisModel := db.Model{Redis: conn, Ctx: ctx}
 	app = &application{DB: redisModel}
+
 	ts = httptest.NewServer(app.routes())
 	app.BaseURL = ts.URL
 
@@ -79,8 +86,12 @@ func TestMain(m *testing.M) {
 	}
 
 	defer ts.Close()
-	code := m.Run()
-	os.Exit(code)
+
+	return m.Run()
+}
+
+func TestMain(m *testing.M) {
+	os.Exit(initTests(m))
 }
 
 func TestGETHealth(t *testing.T) {
@@ -107,9 +118,11 @@ func TestPOSTShorten(t *testing.T) {
 			log.Fatal(err)
 		}
 
+		defer resp.Body.Close()
+
 		response := &ShortenURLResponse{}
 		decoder := json.NewDecoder(resp.Body)
-		decoder.Decode(response)
+		_ = decoder.Decode(response)
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.Equal(t, true, strings.Contains(response.ShortenedURL, ts.URL))
@@ -124,6 +137,8 @@ func TestPOSTShorten(t *testing.T) {
 			log.Fatal(err)
 		}
 
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -136,6 +151,8 @@ func TestPOSTShorten(t *testing.T) {
 			log.Fatal(err)
 		}
 
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
 
@@ -146,6 +163,7 @@ func TestPOSTShorten(t *testing.T) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	})
@@ -155,13 +173,15 @@ func TestGETOriginal(t *testing.T) {
 	t.Run("Should redirect to the original URL if the given ID is valid", func(t *testing.T) {
 		// set a key/value pair in redis
 		key := "205db389"
-		app.DB.Set(key, "https://www.google.com")
+		_ = app.DB.Set(key, "https://www.google.com")
 		reqURL := fmt.Sprintf("%s/%s", ts.URL, key)
 		resp, err := client.Get(reqURL)
 
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusFound, resp.StatusCode)
 	})
@@ -173,6 +193,8 @@ func TestGETOriginal(t *testing.T) {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		defer resp.Body.Close()
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
@@ -189,22 +211,27 @@ func TestGetStats(t *testing.T) {
 			log.Fatal(err)
 		}
 
+		defer resp.Body.Close()
+
 		shortenURLResponse := &ShortenURLResponse{}
 		decoder := json.NewDecoder(resp.Body)
-		decoder.Decode(shortenURLResponse)
+		_ = decoder.Decode(shortenURLResponse)
 
 		numOfRequests := 50
 		makeConcurrentHTTPCalls(shortenURLResponse.ShortenedURL, numOfRequests)
+
 		hitsRes, err := client.Get(shortenURLResponse.ShortenedURL + "/stats")
 		if err != nil {
 			log.Fatal(err)
 		}
 
+		defer hitsRes.Body.Close()
+
 		statsResponse := &StatsResponse{}
 		expectedResp := &StatsResponse{URL: url, Hits: numOfRequests}
 
 		decoder = json.NewDecoder(hitsRes.Body)
-		decoder.Decode(statsResponse)
+		_ = decoder.Decode(statsResponse)
 
 		assert.Equal(t, http.StatusOK, hitsRes.StatusCode)
 		assert.Equal(t, expectedResp, statsResponse)
@@ -218,6 +245,8 @@ func TestGetStats(t *testing.T) {
 			log.Fatal(err)
 		}
 
+		defer resp.Body.Close()
+
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	})
 }
@@ -227,10 +256,20 @@ func makeConcurrentHTTPCalls(url string, noOfRequests int) {
 
 	for i := 0; i < noOfRequests; i++ {
 		wg.Add(1)
-		go func() {
+
+		makeClientReq := func() {
 			defer wg.Done()
-			client.Get(url)
-		}()
+
+			resp, err := client.Get(url)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			defer resp.Body.Close()
+		}
+
+		go makeClientReq()
 	}
+
 	wg.Wait()
 }

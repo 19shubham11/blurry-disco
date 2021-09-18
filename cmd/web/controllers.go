@@ -20,6 +20,7 @@ func (app *application) shortenURLController(request *ShortenURLRequest) (Shorte
 	if err != nil {
 		return ShortenURLResponse{}, err
 	}
+
 	err = app.DB.Set(statKey, strconv.Itoa(initStats))
 
 	if err != nil {
@@ -33,11 +34,17 @@ func (app *application) shortenURLController(request *ShortenURLRequest) (Shorte
 
 func (app *application) getOriginalURLController(hash string) (url string, err error) {
 	url, err = app.DB.Get(hash)
-	statKey := getStatsKey(hash)
 	if err != nil {
 		return "", err
 	}
-	app.DB.Incr(statKey)
+
+	statKey := getStatsKey(hash)
+	_, err = app.DB.Incr(statKey)
+
+	if err != nil {
+		return "", err
+	}
+
 	return url, err
 }
 
@@ -46,17 +53,22 @@ func (app *application) getStatsController(hash string) (res StatsResponse, err 
 	if err != nil {
 		return StatsResponse{}, err
 	}
+
 	statKey := getStatsKey(hash)
+
 	hits, err := app.DB.Get(statKey)
 	if err != nil {
 		return StatsResponse{}, err
 	}
+
 	hitsInt, err := strconv.Atoi(hits)
 
 	if err != nil {
 		return StatsResponse{}, err
 	}
+
 	res = StatsResponse{URL: url, Hits: hitsInt}
+
 	return res, nil
 }
 

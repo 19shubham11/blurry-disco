@@ -7,18 +7,19 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"19shubham11/url-shortener/internal/customErrors"
+	"19shubham11/url-shortener/internal/customerrors"
 	"19shubham11/url-shortener/internal/helpers"
 )
 
 func (app *application) checkHealth(w http.ResponseWriter, _ *http.Request) {
-	w.Write([]byte("OK"))
+	_, _ = w.Write([]byte("OK"))
 }
 
 func (app *application) shortenURL(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
 	body := &ShortenURLRequest{}
+
 	err := decoder.Decode(body)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -40,8 +41,14 @@ func (app *application) shortenURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (app *application) getOriginalURL(w http.ResponseWriter, r *http.Request) {
@@ -51,10 +58,10 @@ func (app *application) getOriginalURL(w http.ResponseWriter, r *http.Request) {
 	url, err := app.getOriginalURLController(hash)
 
 	if err != nil {
-		if errors.Is(err, customErrors.ErrorNotFound) {
+		if errors.Is(err, customerrors.ErrorNotFound) {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
-		} else if errors.Is(err, customErrors.ErrorInternal) {
+		} else if errors.Is(err, customerrors.ErrorInternal) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -70,15 +77,20 @@ func (app *application) getStats(w http.ResponseWriter, r *http.Request) {
 	res, err := app.getStatsController(hash)
 
 	if err != nil {
-		if errors.Is(err, customErrors.ErrorNotFound) {
+		if errors.Is(err, customerrors.ErrorNotFound) {
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
-		} else if errors.Is(err, customErrors.ErrorInternal) {
+		} else if errors.Is(err, customerrors.ErrorInternal) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(res)
+
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }

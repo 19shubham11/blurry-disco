@@ -8,8 +8,9 @@ import (
 
 // CreateUniqueHash returns a random hash of length 8
 func CreateUniqueHash() string {
-	bytes := make([]byte, 4)
-	rand.Read(bytes)
+	byteLength := 4
+	bytes := make([]byte, byteLength)
+	_, _ = rand.Read(bytes)
 
 	return hex.EncodeToString(bytes)
 }
@@ -17,8 +18,6 @@ func CreateUniqueHash() string {
 // IsValidURL validates a given URL
 func IsValidURL(rawurl string) bool {
 	_, err := url.ParseRequestURI(rawurl)
-	if err != nil {
-		return false
-	}
-	return true
+
+	return err == nil
 }

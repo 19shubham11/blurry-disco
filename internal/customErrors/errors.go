@@ -1,8 +1,8 @@
-package customErrors
+package customerrors
 
 import "errors"
 
 var (
-	ErrorNotFound = errors.New("Key Not Found")
-	ErrorInternal = errors.New("Internal Error")
+	ErrorNotFound = errors.New("key not found")
+	ErrorInternal = errors.New("internal error")
 )

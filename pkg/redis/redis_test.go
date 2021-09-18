@@ -9,14 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"19shubham11/url-shortener/config"
-	"19shubham11/url-shortener/internal/customErrors"
+	"19shubham11/url-shortener/internal/customerrors"
 )
 
 var conn *redis.Client
-var redisModel *RedisModel
+var redisModel *Model
 
 func redisSetup() (*redis.Client, func()) {
-
 	redisPass := os.Getenv("REDIS_PASS")
 
 	redisConf := config.RedisConf{
@@ -27,22 +26,28 @@ func redisSetup() (*redis.Client, func()) {
 		DB:       3,
 	}
 
-	conn := SetupRedis(redisConf)
+	conn = SetupRedis(redisConf)
 
 	return conn, func() {
 		var ctx = context.Background()
+
 		conn.FlushDB(ctx)
 		conn.Close()
 	}
 }
 
-func TestMain(m *testing.M) {
+func initTests(m *testing.M) int {
 	conn, teardown := redisSetup()
 	defer teardown()
+
 	ctx := context.Background()
-	redisModel = &RedisModel{Redis: conn, Ctx: ctx}
-	code := m.Run()
-	os.Exit(code)
+	redisModel = &Model{Redis: conn, Ctx: ctx}
+
+	return m.Run()
+}
+
+func TestMain(m *testing.M) {
+	os.Exit(initTests(m))
 }
 
 func TestSET(t *testing.T) {
@@ -53,9 +58,11 @@ func TestSET(t *testing.T) {
 }
 func TestGET(t *testing.T) {
 	t.Run("GET should return the value of a key if it exists", func(t *testing.T) {
-		key := "key1"
+		key := "keyGet"
 		value := "value1"
-		redisModel.Set(key, value)
+
+		err := redisModel.Set(key, value)
+		assert.Nil(t, err)
 
 		res, err := redisModel.Get(key)
 		assert.Nil(t, err)
@@ -65,14 +72,16 @@ func TestGET(t *testing.T) {
 	t.Run("GET should return an error if trying to get a key that does not exist", func(t *testing.T) {
 		res, err := redisModel.Get("Does not exist")
 		assert.Equal(t, res, "")
-		assert.Equal(t, err, customErrors.ErrorNotFound)
+		assert.Equal(t, err, customerrors.ErrorNotFound)
 	})
 }
 func TestINCR(t *testing.T) {
 	t.Run("INCR should return the incremented value if the value can be cast as int", func(t *testing.T) {
-		key := "key1"
+		key := "keyIncr"
 		value := "22"
-		redisModel.Set(key, value)
+
+		err := redisModel.Set(key, value)
+		assert.Nil(t, err)
 
 		res, err := redisModel.Incr(key)
 		assert.Nil(t, err)
@@ -80,11 +89,13 @@ func TestINCR(t *testing.T) {
 	})
 
 	t.Run("INCR should return an error if the value cannot be cast as int", func(t *testing.T) {
-		key := "key1"
+		key := "keyNotInt"
 		value := "value"
-		redisModel.Set(key, value)
 
-		_, err := redisModel.Incr(key)
-		assert.Equal(t, err, customErrors.ErrorInternal)
+		err := redisModel.Set(key, value)
+		assert.Nil(t, err)
+
+		_, err = redisModel.Incr(key)
+		assert.Equal(t, err, customerrors.ErrorInternal)
 	})
 }

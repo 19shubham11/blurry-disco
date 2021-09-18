@@ -28,10 +28,12 @@ func main() {
 	}
 
 	ctx := context.Background()
-	log.Println("Connected to Redis!")
 
-	redisModel := redis.RedisModel{Redis: conn, Ctx: ctx}
+	log.Printf("Connected to Redis on %s:%d", appConfig.Redis.Host, appConfig.Server.Port)
+
 	baseURL := fmt.Sprintf("%s:%d", appConfig.Server.Host, appConfig.Server.Port)
+
+	redisModel := redis.Model{Redis: conn, Ctx: ctx}
 	app := &application{DB: redisModel, BaseURL: baseURL}
 
 	server := &http.Server{
@@ -40,8 +42,8 @@ func main() {
 	}
 
 	log.Printf("Starting server on port %d!", appConfig.Server.Port)
-	err = server.ListenAndServe()
 
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("Something Happened!")
 	}
