@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 
-	"19shubham11/url-shortener/internal/customerrors"
+	customerrors "19shubham11/url-shortener/internal/customerrors"
 )
 
 type Model struct {
