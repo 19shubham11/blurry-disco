@@ -20,7 +20,7 @@ type application struct {
 
 func main() {
 	appConfig := config.GetApplicationConfig()
-	conn := redis.SetupRedis(appConfig.Redis)
+	conn := redis.Setup(appConfig.Redis)
 
 	_, err := conn.Ping(context.Background()).Result()
 	if err != nil {

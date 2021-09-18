@@ -32,7 +32,7 @@ func redisSetup() (*redis.Client, func()) {
 		DB:       3,
 	}
 
-	conn := db.SetupRedis(redisConf)
+	conn := db.Setup(redisConf)
 
 	return conn, func() {
 		var ctx = context.Background()
