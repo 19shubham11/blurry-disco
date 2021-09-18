@@ -1,10 +1,11 @@
 package config
 
 import (
-	"log"
+	"encoding/json"
+	"fmt"
 	"os"
-
-	"github.com/spf13/viper"
+	"path"
+	"runtime"
 )
 
 type ServerConf struct {
@@ -25,32 +26,45 @@ type Config struct {
 	Redis  RedisConf
 }
 
-func GetApplicationConfig() *Config {
-	pwd, err := os.Getwd()
+func setEnvConfig(key, fallback string) string {
+	value, ok := os.LookupEnv(key)
+	if !ok {
+		value = fallback
+	}
+
+	return value
+}
+
+func loadConfig() (*Config, error) {
+	// Relative on runtime DIR:
+	_, b, _, ok := runtime.Caller(0)
+	if !ok {
+		return nil, fmt.Errorf("error resolving pwd")
+	}
+
+	dir := path.Join(path.Dir(b))
+
+	file, err := os.Open(dir + "/config.json")
 	if err != nil {
+		return nil, err
+	}
+
+	appConfig := &Config{}
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(appConfig)
+
+	return appConfig, err
+}
+
+func GetApplicationConfig() *Config {
+	conf, err := loadConfig()
+	if err != nil {
+		fmt.Printf("unable to load application config %v", err)
 		panic(err)
 	}
 
-	viper.SetConfigName("config")
-	viper.AutomaticEnv()
-	viper.SetConfigType("yml")
-
-	err = viper.BindEnv("redis.password", "REDIS_PASS")
-	if err != nil {
-		log.Fatal("err!", err)
-	}
-
-	viper.AddConfigPath(pwd + "/config")
-	err = viper.ReadInConfig()
-	if err != nil {
-		log.Fatal("err!", err)
-	}
-
-	conf := &Config{}
-	err = viper.Unmarshal(conf)
-	if err != nil {
-		log.Fatal("unable to decode config", err)
-	}
+	// set env vars
+	conf.Redis.Password = setEnvConfig("REDIS_PASS", "default")
 
 	return conf
 }
