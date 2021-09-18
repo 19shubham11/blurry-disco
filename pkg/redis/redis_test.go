@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"19shubham11/url-shortener/config"
-	"19shubham11/url-shortener/internal/customerrors"
+	customerrors "19shubham11/url-shortener/internal/customerrors"
 )
 
 var conn *redis.Client
