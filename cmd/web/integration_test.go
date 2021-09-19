@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -19,6 +21,7 @@ import (
 
 	"19shubham11/url-shortener/cmd/config"
 	db "19shubham11/url-shortener/cmd/pkg/redis"
+	"19shubham11/url-shortener/cmd/web/server"
 )
 
 func redisSetup() (*redis.Client, func()) {
@@ -62,8 +65,10 @@ func getJSONBytes(str interface{}) []byte {
 }
 
 var ts *httptest.Server
-var app *application
+var app *server.Server
 var client *http.Client
+var redisModel db.Model
+var customURL = "127.0.0.1:50382"
 
 func initTests(m *testing.M) int {
 	conn, teardown := redisSetup()
@@ -73,19 +78,27 @@ func initTests(m *testing.M) int {
 
 	ctx := context.Background()
 
-	redisModel := db.Model{Redis: conn, Ctx: ctx}
-	app = &application{DB: redisModel}
+	redisModel = db.Model{Redis: conn, Ctx: ctx}
+	app = server.NewServer(redisModel, customURL)
 
-	ts = httptest.NewServer(app.routes())
-	app.BaseURL = ts.URL
+	ts = httptest.NewUnstartedServer(app.Routes())
+
+	// start testserver on custom url
+	l, err := net.Listen("tcp", customURL)
+	if err != nil {
+		log.Panicf("could not start test server %v", err)
+	}
+
+	ts.Listener = l
+
+	ts.Start()
+	defer ts.Close()
 
 	client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
-
-	defer ts.Close()
 
 	return m.Run()
 }
@@ -110,7 +123,7 @@ func TestGETHealth(t *testing.T) {
 
 func TestPOSTShorten(t *testing.T) {
 	t.Run("Should return 200 for a valid request", func(t *testing.T) {
-		reqBody := &ShortenURLRequest{URL: "https://www.google.com"}
+		reqBody := &server.ShortenURLRequest{URL: "https://www.google.com"}
 		reqJSON := getJSONBytes(reqBody)
 		resp, err := client.Post(ts.URL+"/shorten", "application/json", bytes.NewBuffer(reqJSON))
 
@@ -120,16 +133,16 @@ func TestPOSTShorten(t *testing.T) {
 
 		defer resp.Body.Close()
 
-		response := &ShortenURLResponse{}
+		response := &server.ShortenURLResponse{}
 		decoder := json.NewDecoder(resp.Body)
 		_ = decoder.Decode(response)
 
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
-		assert.Equal(t, true, strings.Contains(response.ShortenedURL, ts.URL))
+		assert.Equal(t, true, strings.Contains(response.ShortenedURL, customURL))
 	})
 
 	t.Run("Should return 400 if url field is empty", func(t *testing.T) {
-		reqBody := &ShortenURLRequest{URL: ""}
+		reqBody := &server.ShortenURLRequest{URL: ""}
 		reqJSON := getJSONBytes(reqBody)
 		resp, err := client.Post(ts.URL+"/shorten", "application/json", bytes.NewBuffer(reqJSON))
 
@@ -143,7 +156,7 @@ func TestPOSTShorten(t *testing.T) {
 	})
 
 	t.Run("Should return 400 if the given url is invalid", func(t *testing.T) {
-		reqBody := &ShortenURLRequest{URL: "notAURL"}
+		reqBody := &server.ShortenURLRequest{URL: "notAURL"}
 		reqJSON := getJSONBytes(reqBody)
 		resp, err := client.Post(ts.URL+"/shorten", "application/json", bytes.NewBuffer(reqJSON))
 
@@ -173,7 +186,7 @@ func TestGETOriginal(t *testing.T) {
 	t.Run("Should redirect to the original URL if the given ID is valid", func(t *testing.T) {
 		// set a key/value pair in redis
 		key := "205db389"
-		_ = app.DB.Set(key, "https://www.google.com")
+		_ = redisModel.Set(key, "https://www.google.com")
 		reqURL := fmt.Sprintf("%s/%s", ts.URL, key)
 		resp, err := client.Get(reqURL)
 
@@ -203,7 +216,7 @@ func TestGETOriginal(t *testing.T) {
 func TestGetStats(t *testing.T) {
 	t.Run("Should return 200 and stats for a given id", func(t *testing.T) {
 		url := "https://www.google.com"
-		reqBody := &ShortenURLRequest{URL: url}
+		reqBody := &server.ShortenURLRequest{URL: url}
 		reqJSON := getJSONBytes(reqBody)
 		resp, err := client.Post(ts.URL+"/shorten", "application/json", bytes.NewBuffer(reqJSON))
 
@@ -213,22 +226,25 @@ func TestGetStats(t *testing.T) {
 
 		defer resp.Body.Close()
 
-		shortenURLResponse := &ShortenURLResponse{}
+		shortenURLResponse := &server.ShortenURLResponse{}
 		decoder := json.NewDecoder(resp.Body)
 		_ = decoder.Decode(shortenURLResponse)
 
 		numOfRequests := 50
-		makeConcurrentHTTPCalls(shortenURLResponse.ShortenedURL, numOfRequests)
 
-		hitsRes, err := client.Get(shortenURLResponse.ShortenedURL + "/stats")
+		httpURL := "http://" + shortenURLResponse.ShortenedURL
+
+		makeConcurrentHTTPCalls(httpURL, numOfRequests)
+
+		hitsRes, err := client.Get(httpURL + "/stats")
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		defer hitsRes.Body.Close()
 
-		statsResponse := &StatsResponse{}
-		expectedResp := &StatsResponse{URL: url, Hits: numOfRequests}
+		statsResponse := &server.StatsResponse{}
+		expectedResp := &server.StatsResponse{URL: url, Hits: numOfRequests}
 
 		decoder = json.NewDecoder(hitsRes.Body)
 		_ = decoder.Decode(statsResponse)
@@ -251,7 +267,12 @@ func TestGetStats(t *testing.T) {
 	})
 }
 
-func makeConcurrentHTTPCalls(url string, noOfRequests int) {
+func makeConcurrentHTTPCalls(rawURL string, noOfRequests int) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		log.Fatal("err parsing rawURL!", err)
+	}
+
 	var wg sync.WaitGroup
 
 	for i := 0; i < noOfRequests; i++ {
@@ -260,7 +281,7 @@ func makeConcurrentHTTPCalls(url string, noOfRequests int) {
 		makeClientReq := func() {
 			defer wg.Done()
 
-			resp, err := client.Get(url)
+			resp, err := client.Get(u.String())
 			if err != nil {
 				log.Fatal(err)
 			}

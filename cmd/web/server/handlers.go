@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"encoding/json"
@@ -11,11 +11,11 @@ import (
 	"19shubham11/url-shortener/cmd/internal/helpers"
 )
 
-func (app *application) checkHealth(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) checkHealth(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write([]byte("OK"))
 }
 
-func (app *application) shortenURL(w http.ResponseWriter, r *http.Request) {
+func (s *Server) shortenURL(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
 	body := &ShortenURLRequest{}
@@ -36,7 +36,7 @@ func (app *application) shortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := app.shortenURLController(body)
+	res, err := s.shortenURLController(body)
 	if err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
@@ -51,11 +51,11 @@ func (app *application) shortenURL(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app *application) getOriginalURL(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getOriginalURL(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	hash := vars["id"]
 
-	url, err := app.getOriginalURLController(hash)
+	url, err := s.getOriginalURLController(hash)
 
 	if err != nil {
 		if errors.Is(err, customerrors.ErrorNotFound) {
@@ -70,11 +70,11 @@ func (app *application) getOriginalURL(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
-func (app *application) getStats(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getStats(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	hash := vars["id"]
 
-	res, err := app.getStatsController(hash)
+	res, err := s.getStatsController(hash)
 
 	if err != nil {
 		if errors.Is(err, customerrors.ErrorNotFound) {

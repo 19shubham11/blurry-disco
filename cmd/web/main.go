@@ -10,13 +10,8 @@ import (
 
 	"19shubham11/url-shortener/cmd/config"
 	"19shubham11/url-shortener/cmd/pkg/redis"
-	"19shubham11/url-shortener/cmd/pkg/store"
+	"19shubham11/url-shortener/cmd/web/server"
 )
-
-type application struct {
-	DB      store.Store
-	BaseURL string
-}
 
 func main() {
 	appConfig := config.GetApplicationConfig()
@@ -34,17 +29,17 @@ func main() {
 	baseURL := fmt.Sprintf("%s:%d", appConfig.Server.Host, appConfig.Server.Port)
 
 	redisModel := redis.Model{Redis: conn, Ctx: ctx}
-	app := &application{DB: redisModel, BaseURL: baseURL}
+	app := server.NewServer(redisModel, baseURL)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", appConfig.Server.Port),
-		Handler: app.routes(),
+		Handler: app.Routes(),
 	}
 
 	log.Printf("Starting server on port %d!", appConfig.Server.Port)
 
 	err = server.ListenAndServe()
 	if err != nil {
-		log.Fatalf("Something Happened!")
+		log.Fatalf("could not start http server: %v", err)
 	}
 }

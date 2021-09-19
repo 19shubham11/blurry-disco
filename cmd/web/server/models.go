@@ -1,4 +1,4 @@
-package main
+package server
 
 type ShortenURLRequest struct {
 	URL string `json:"url"`

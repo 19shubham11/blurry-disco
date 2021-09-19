@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -12,34 +12,34 @@ const (
 	initStats   = 0
 )
 
-func (app *application) shortenURLController(request *ShortenURLRequest) (ShortenURLResponse, error) {
+func (s *Server) shortenURLController(request *ShortenURLRequest) (ShortenURLResponse, error) {
 	hash := helpers.CreateUniqueHash()
 	statKey := getStatsKey(hash)
 
-	err := app.DB.Set(hash, request.URL)
+	err := s.db.Set(hash, request.URL)
 	if err != nil {
 		return ShortenURLResponse{}, err
 	}
 
-	err = app.DB.Set(statKey, strconv.Itoa(initStats))
+	err = s.db.Set(statKey, strconv.Itoa(initStats))
 
 	if err != nil {
 		return ShortenURLResponse{}, err
 	}
 
-	returnURL := fmt.Sprintf("%s/%s", app.BaseURL, hash)
+	returnURL := fmt.Sprintf("%s/%s", s.baseURL, hash)
 
 	return ShortenURLResponse{ShortenedURL: returnURL}, nil
 }
 
-func (app *application) getOriginalURLController(hash string) (url string, err error) {
-	url, err = app.DB.Get(hash)
+func (s *Server) getOriginalURLController(hash string) (url string, err error) {
+	url, err = s.db.Get(hash)
 	if err != nil {
 		return "", err
 	}
 
 	statKey := getStatsKey(hash)
-	_, err = app.DB.Incr(statKey)
+	_, err = s.db.Incr(statKey)
 
 	if err != nil {
 		return "", err
@@ -48,15 +48,15 @@ func (app *application) getOriginalURLController(hash string) (url string, err e
 	return url, err
 }
 
-func (app *application) getStatsController(hash string) (res StatsResponse, err error) {
-	url, err := app.DB.Get(hash)
+func (s *Server) getStatsController(hash string) (res StatsResponse, err error) {
+	url, err := s.db.Get(hash)
 	if err != nil {
 		return StatsResponse{}, err
 	}
 
 	statKey := getStatsKey(hash)
 
-	hits, err := app.DB.Get(statKey)
+	hits, err := s.db.Get(statKey)
 	if err != nil {
 		return StatsResponse{}, err
 	}
