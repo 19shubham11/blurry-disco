@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"19shubham11/url-shortener/cmd/config"
-	"19shubham11/url-shortener/cmd/internal/customerrors"
 )
 
 var conn *redis.Client
@@ -51,11 +50,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestSET(t *testing.T) {
-	t.Run("SET should return OK", func(t *testing.T) {
-		err := redisModel.Set("key1", "value1")
-		assert.Equal(t, err, nil)
-	})
+	err := redisModel.Set("key1", "value1")
+	assert.Equal(t, err, nil)
 }
+
 func TestGET(t *testing.T) {
 	t.Run("GET should return the value of a key if it exists", func(t *testing.T) {
 		key := "keyGet"
@@ -72,30 +70,67 @@ func TestGET(t *testing.T) {
 	t.Run("GET should return an error if trying to get a key that does not exist", func(t *testing.T) {
 		res, err := redisModel.Get("Does not exist")
 		assert.Equal(t, res, "")
-		assert.Equal(t, err, customerrors.ErrorNotFound)
+		assert.Equal(t, err, ErrorNotFound)
 	})
 }
+
 func TestINCR(t *testing.T) {
-	t.Run("INCR should return the incremented value if the value can be cast as int", func(t *testing.T) {
-		key := "keyIncr"
-		value := "22"
 
-		err := redisModel.Set(key, value)
-		assert.Nil(t, err)
+	tests := map[string]struct {
+		key           string
+		value         string
+		expectedError error
+		expectedRes   int
+	}{
+		"value cast as int":           {"KeyIncr", "22", nil, 23},
+		"value cannot be cast as int": {"keyNotInt", "twentyTwo", ErrorInternal, 0},
+	}
 
-		res, err := redisModel.Incr(key)
-		assert.Nil(t, err)
-		assert.Equal(t, res, 23)
-	})
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			err := redisModel.Set(tc.key, tc.value)
+			assert.Nil(t, err)
 
-	t.Run("INCR should return an error if the value cannot be cast as int", func(t *testing.T) {
-		key := "keyNotInt"
-		value := "value"
+			res, err := redisModel.Incr(tc.key)
 
-		err := redisModel.Set(key, value)
-		assert.Nil(t, err)
+			if err != nil {
+				assert.Equal(t, err, ErrorInternal)
+			} else {
+				assert.Equal(t, res, tc.expectedRes)
+			}
+		})
+	}
+}
 
-		_, err = redisModel.Incr(key)
-		assert.Equal(t, err, customerrors.ErrorInternal)
-	})
+func TestMset(t *testing.T) {
+	set := map[string]string{
+		"k1": "v1",
+		"k2": "v2",
+		"k3": "v3",
+	}
+
+	err := redisModel.Mset(set)
+	assert.Equal(t, err, nil)
+}
+
+func TestMget(t *testing.T) {
+	set := map[string]string{
+		"k1": "v1",
+		"k2": "v2",
+		"k3": "v3",
+	}
+
+	values := make([]string, 0, len(set))
+	keys := make([]string, 0, len(set))
+	for k, v := range set {
+		keys = append(keys, k)
+		values = append(values, v)
+	}
+
+	_ = redisModel.Mset(set)
+
+	res, err := redisModel.Mget(keys)
+
+	assert.Nil(t, err)
+	assert.Equal(t, res, values)
 }
