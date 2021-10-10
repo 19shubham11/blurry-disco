@@ -75,7 +75,6 @@ func TestGET(t *testing.T) {
 }
 
 func TestINCR(t *testing.T) {
-
 	tests := map[string]struct {
 		key           string
 		value         string
@@ -122,6 +121,7 @@ func TestMget(t *testing.T) {
 
 	values := make([]string, 0, len(set))
 	keys := make([]string, 0, len(set))
+
 	for k, v := range set {
 		keys = append(keys, k)
 		values = append(values, v)

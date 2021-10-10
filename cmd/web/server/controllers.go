@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"19shubham11/url-shortener/cmd/internal/helpers"
+	"19shubham11/url-shortener/cmd/pkg/redis"
 )
 
 const (
@@ -16,12 +17,12 @@ func (s *Server) shortenURLController(request *ShortenURLRequest) (ShortenURLRes
 	hash := helpers.CreateUniqueHash()
 	statKey := getStatsKey(hash)
 
-	err := s.db.Set(hash, request.URL)
-	if err != nil {
-		return ShortenURLResponse{}, err
+	set := map[string]string{
+		hash:    request.URL,
+		statKey: strconv.Itoa(initStats),
 	}
 
-	err = s.db.Set(statKey, strconv.Itoa(initStats))
+	err := s.db.Mset(set)
 
 	if err != nil {
 		return ShortenURLResponse{}, err
@@ -49,16 +50,20 @@ func (s *Server) getOriginalURLController(hash string) (url string, err error) {
 }
 
 func (s *Server) getStatsController(hash string) (res StatsResponse, err error) {
-	url, err := s.db.Get(hash)
+	statKey := getStatsKey(hash)
+	keys := []string{hash, statKey}
+
+	values, err := s.db.Mget(keys)
+
 	if err != nil {
 		return StatsResponse{}, err
 	}
 
-	statKey := getStatsKey(hash)
+	url := values[0]
+	hits := values[1]
 
-	hits, err := s.db.Get(statKey)
-	if err != nil {
-		return StatsResponse{}, err
+	if hits == "" {
+		return StatsResponse{}, redis.ErrorNotFound
 	}
 
 	hitsInt, err := strconv.Atoi(hits)

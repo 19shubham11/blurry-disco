@@ -29,7 +29,7 @@ func (r Model) Get(key string) (string, error) {
 			return value, ErrorNotFound
 		}
 
-		return "", ErrorInternal
+		return "", ErrorNotFound
 	}
 
 	return value, nil
@@ -67,8 +67,13 @@ func (r Model) Mget(keys []string) ([]string, error) {
 	}
 
 	ret := []string{}
+
 	for _, v := range res {
-		ret = append(ret, fmt.Sprint(v))
+		if v == nil {
+			ret = append(ret, "")
+		} else {
+			ret = append(ret, fmt.Sprint(v))
+		}
 	}
 
 	return ret, nil
